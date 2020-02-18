@@ -10,10 +10,11 @@ import sys
 import time
 
 host = "localhost"
-port = 10060
+port = 10500
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect((host,port))
+time.sleep(1)
+socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+socket.connect((host,port))
 
 array=[]
 CMD_SAY = './module/jtalk.sh'
@@ -21,33 +22,25 @@ dic_words=[]
 small_words=[["っ","つ"],["ゃ","や"],["ゅ","ゆ"],["ょ","よ"],["ぁ","あ"],["ぃ","い"],["ぅ","う"],["ぇ","え"],["ぉ","お"],["ゎ","わ"]]
 used_words=[]
 
-'''
-def write_file():
-    with open("result.txt","wt") as f:
-        for w in array:
-            f.write(w+"\n")
-'''
 
-
-######ここから
+#####ここから
 
 def shiritori(player_word):
     t=1
-
-#「あ」〜「ぽ」まで >>69回<< くりかえす
-    for i in range(69):
+# 「あ」〜「ぽ」まで >>69回<< くりかえす
+    for i in range('''ここにいれてね'''):
         if player_word[len(player_word)-1]=="ー":
             t=2
         search=player_word[len(player_word)-t]
-# 小さい文字種の数分 9回 >>くりかえす<<
-        for j in range(9):
+# 小さい文字の種類分 9回 >>くりかえす<<
+        '''ここにいれてね''' j in range(9):
             if player_word[len(player_word)-t]==small_words[j][0]:
                 search=small_words[j][1]
         if search==dic_words[i][0]:
             if len(dic_words[i])!=1:
                 rand=random.randint(1,len(dic_words[i])-1)
-# >>もし<< 最後の文字が「ん」だったら
-                if dic_words[i][rand].endswith('ん'):
+# >>もし<< 「ん」がついたらの条件分岐
+                """ここにいれてね""" dic_words[i][rand].endswith('ん'):
                     say(dic_words[i][rand])
                     say("あっ、んがついたので私のまけです")
                     sys.exit()
@@ -57,16 +50,14 @@ def shiritori(player_word):
                     used_words[i].append(dic_words[i][rand])
                     del dic_words[i][rand]
             else:
-#ラズパイの単語がなくなったときに言うことばを変えてみよう
                 say("単語がなくなりました、私のまけです")
                 sys.exit()
             return player_word
 
-
+#####ここまで
 
 def check(word):
     player_word=listen()
-    ###import pdb; pdb.set_trace()
     while word[len(word)-1]!=player_word[0]:
             say(word[len(word)-1]+"からはじまって")
             time.sleep(1)
@@ -80,17 +71,25 @@ def check(word):
             say("それ、さっき言ったから私の勝ち")
             sys.exit()
     used_words[stock].append(player_word)
-    for i in range(len(dic_words[stock])-1):
+    for i in range(len(dic_words[stock])-2):
         if player_word==dic_words[stock][i+1]:
             del dic_words[stock][i+1]
     if player_word.endswith("ん")==True:
         say("ざんねん、私のかちです")
-        #write_file()
+        write_file()
         sys.exit()
     return player_word
 
-#########ここまで
 
+
+def del_line(del_num):
+    if del_num == 1:
+        sys.stdout.write("\033[2K\033[A\033[2K\033[G")
+        sys.stdout.flush()
+    if del_num == 2:
+        sys.stdout.write("\033[2K\033[A\033[2K\033[A\033[G\033[K")
+        sys.stdout.flush()
+    return
 
 def read_dec():
     with open("./module/dictionary2.txt","r") as dic_f:
@@ -107,16 +106,21 @@ def read_dec():
     user_dic.close()
 
 
+def say(text):
+    print("raspberry pi >>> " + text)
+    text = CMD_SAY + ' ' + text
+    proc = subprocess.Popen(shlex.split(text))
+    proc.communicate()
+    return
 
 
 def listen():
-    print("\rYOUR TURN  >>> ",end='')
-    s.sendall(b"RESUME\n")
+    print("\rYOUR TURN    >>> ",end='')
+    socket.sendall(b"RESUME\n")
     data = ""
     while(data.find('</SHYPO>') == -1):
-        data += s.recv(1024).decode("utf-8")
+        data += socket.recv(1024).decode("utf-8")
         time.sleep(1)
-        ###player_word=''
         for line in data.split('\n'):
             index = line.find('WORD=')
             if index != -1:
@@ -124,32 +128,25 @@ def listen():
                 if line != '[s]' and line != '[/s]':
                     player_word = line
                     print(player_word)
-                    ###socket.sendall(b"PAUSE\n")
+                    socket.sendall(b"PAUSE\n")
                     flag = input("Is this right? [Enter/n] ")
+                    if flag == "debug":
+                        return input("input player word")
                     if flag == "":
+                        del_line(1)
                         array.append(player_word)
                         return player_word
                     else:
+                        del_line(2)
                         player_word=''
                         return listen()
 
-
-
-def say(text):
-    text = CMD_SAY + ' ' + text
-    proc = subprocess.Popen(shlex.split(text))
-    proc.communicate()
-    return
-
-
-
-
-
-
 ### Execute
 if __name__ == "__main__":
+    del_line(1)
+
     try:
-        s.sendall(b"PAUSE\n")
+        socket.sendall(b"PAUSE\n")
         read_dec()
         word="しりとり"
         say(word)
@@ -157,7 +154,7 @@ if __name__ == "__main__":
         while True:
             word=shiritori(word)
     except KeyboardInterrupt:
-        #write_file()
         print("disconnect")
-        s.close()
-
+        socket.close()
+    finally:
+        socket.close()

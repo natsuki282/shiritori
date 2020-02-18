@@ -28,6 +28,70 @@ def write_file():
             f.write(w+"\n")
 '''
 
+
+######ここから
+
+def shiritori(player_word):
+    t=1
+
+#「あ」〜「ぽ」まで >>69回<< くりかえす
+    for i in range(69):
+        if player_word[len(player_word)-1]=="ー":
+            t=2
+        search=player_word[len(player_word)-t]
+# 小さい文字種の数分 9回 >>くりかえす<<
+        for j in range(9):
+            if player_word[len(player_word)-t]==small_words[j][0]:
+                search=small_words[j][1]
+        if search==dic_words[i][0]:
+            if len(dic_words[i])!=1:
+                rand=random.randint(1,len(dic_words[i])-1)
+# >>もし<< 最後の文字が「ん」だったら
+                if dic_words[i][rand].endswith('ん'):
+                    say(dic_words[i][rand])
+                    say("あっ、んがついたので私のまけです")
+                    sys.exit()
+                else:
+                    say(dic_words[i][rand])
+                    player_word=check(dic_words[i][rand])
+                    used_words[i].append(dic_words[i][rand])
+                    del dic_words[i][rand]
+            else:
+#ラズパイの単語がなくなったときに言うことばを変えてみよう
+                say("単語がなくなりました、私のまけです")
+                sys.exit()
+            return player_word
+
+
+
+def check(word):
+    player_word=listen()
+    ###import pdb; pdb.set_trace()
+    while word[len(word)-1]!=player_word[0]:
+            say(word[len(word)-1]+"からはじまって")
+            time.sleep(1)
+            player_word=listen()
+    for i in range(69):
+        if player_word[0]==used_words[i][0]:
+            stock=i
+            break
+    for i in range(len(used_words[stock])-1):
+        if player_word==used_words[stock][i+1]:
+            say("それ、さっき言ったから私の勝ち")
+            sys.exit()
+    used_words[stock].append(player_word)
+    for i in range(len(dic_words[stock])-1):
+        if player_word==dic_words[stock][i+1]:
+            del dic_words[stock][i+1]
+    if player_word.endswith("ん")==True:
+        say("ざんねん、私のかちです")
+        #write_file()
+        sys.exit()
+    return player_word
+
+#########ここまで
+
+
 def read_dec():
     with open("./module/dictionary2.txt","r") as dic_f:
         buff=dic_f.read().split("\n")
@@ -42,32 +106,8 @@ def read_dec():
             used_words.append(temper)
     user_dic.close()
 
-def shiritori(player_word):
-    t=1
-    for i in range(69):
-        if player_word[len(player_word)-1]=="ー":
-            t=2
-        search=player_word[len(player_word)-t]
-        for j in range(9):
-            if player_word[len(player_word)-t]==small_words[j][0]:
-                search=small_words[j][1]
-        if search==dic_words[i][0]:
-            if len(dic_words[i])!=1:
-                rand=random.randint(1,len(dic_words[i])-1)
-                #もし最後の文字がんだったら
-                if dic_words[i][rand].endswith('ん'):
-                    say(dic_words[i][rand])
-                    say("あっ、んがついたので私のまけです") #負けたときの言葉
-                    sys.exit()
-                else:
-                    say(dic_words[i][rand])
-                    player_word=check(dic_words[i][rand])
-                    used_words[i].append(dic_words[i][rand])
-                    del dic_words[i][rand]
-            else:
-                say("単語がなくなりました、私のまけです")
-                sys.exit()
-            return player_word
+
+
 
 def listen():
     print("\rYOUR TURN  >>> ",end='')
@@ -93,37 +133,16 @@ def listen():
                         player_word=''
                         return listen()
 
-def check(word):
-    player_word=listen()
-    ###import pdb; pdb.set_trace()
-    while word[len(word)-1]!=player_word[0]:
-            say(word[len(word)-1]+"からはじまって")
-            time.sleep(1)
-            player_word=listen()
-    for i in range(69):
-        if player_word[0]==used_words[i][0]:
-            stock=i
-            break
-    for i in range(len(used_words[stock])-1):
-        if player_word==used_words[stock][i+1]:
-            say("それ、さっき言ったから私の勝ち")
-            sys.exit()
-    used_words[stock].append(player_word)
-    for i in range(len(dic_words[stock])-2):
-        if player_word==dic_words[stock][i+1]:
-            del dic_words[stock][i+1]
-    if player_word.endswith("ん")==True:
-        say("ざんねん、私のかちです")
-        write_file()
-        sys.exit()
-    return player_word
+
 
 def say(text):
-    print("raspberry pi : " + text)
     text = CMD_SAY + ' ' + text
     proc = subprocess.Popen(shlex.split(text))
     proc.communicate()
     return
+
+
+
 
 
 
